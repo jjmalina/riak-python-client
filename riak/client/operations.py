@@ -42,7 +42,7 @@ class RiakClientOperations(RiakClientTransport):
         .. warning:: Do not use this in production, as it requires
            traversing through all keys stored in a cluster.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param timeout: a timeout value in milliseconds
@@ -84,7 +84,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Check if the Riak server for this ``RiakClient`` instance is alive.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :rtype: boolean
@@ -103,7 +103,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Queries a secondary index, returning matching keys.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param bucket: the bucket whose index will be queried
@@ -186,7 +186,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Fetches bucket properties for the given bucket.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param bucket: the bucket whose properties will be fetched
@@ -202,7 +202,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Sets bucket properties for the given bucket.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param bucket: the bucket whose properties will be set
@@ -219,7 +219,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Resets bucket properties for the given bucket.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param bucket: the bucket whose properties will be set
@@ -234,7 +234,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Lists all keys in a bucket.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param bucket: the bucket whose properties will be set
@@ -276,7 +276,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Stores an object in the Riak cluster.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param robj: the object to store
@@ -309,7 +309,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Fetches the contents of a Riak object.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param robj: the object to fetch
@@ -337,7 +337,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Deletes an object from Riak.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param robj: the object to store
@@ -368,7 +368,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Executes a MapReduce query.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param inputs: the input list/structure
@@ -411,7 +411,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Performs a full-text search query.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param index: the bucket/index to search over
@@ -431,7 +431,7 @@ class RiakClientOperations(RiakClientTransport):
         Adds documents to the full-text index.
 
         .. note:: This request is automatically retried
-           :attr:`RETRY_COUNT` times if it fails due to network error.
+           :attr:`retries` times if it fails due to network error.
            Only HTTP will be used for this request.
 
         :param index: the bucket/index in which to index these docs
@@ -449,7 +449,7 @@ class RiakClientOperations(RiakClientTransport):
         Removes documents from the full-text index.
 
         .. note:: This request is automatically retried
-           :attr:`RETRY_COUNT` times if it fails due to network error.
+           :attr:`retries` times if it fails due to network error.
            Only HTTP will be used for this request.
 
         :param index: the bucket/index from which to delete
@@ -483,7 +483,7 @@ class RiakClientOperations(RiakClientTransport):
 
         Gets the value of a counter.
 
-        .. note:: This request is automatically retried :attr:`RETRY_COUNT`
+        .. note:: This request is automatically retried :attr:`retries`
            times if it fails due to network error.
 
         :param bucket: the bucket of the counter
