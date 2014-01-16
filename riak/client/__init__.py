@@ -232,20 +232,17 @@ class RiakClient(RiakMapReduceChain, RiakClientOperations):
         """
         self._decoders[content_type] = decoder
 
-    def bucket(self, name):
+    def bucket(self, name, type=None):
         """
         Get the bucket by the specified name. Since buckets always exist,
         this will always return a :class:`RiakBucket <riak.bucket.RiakBucket>`.
 
         :rtype: :class:`RiakBucket <riak.bucket.RiakBucket>`
         """
-        if not isinstance(name, basestring):
-            raise TypeError('Bucket name must be a string')
-
         if name in self._buckets:
             return self._buckets[name]
         else:
-            bucket = RiakBucket(self, name)
+            bucket = RiakBucket(self, name, type=type)
             self._buckets[name] = bucket
             return bucket
 

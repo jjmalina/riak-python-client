@@ -61,15 +61,7 @@ from messages import (
     MSG_CODE_COUNTER_UPDATE_REQ,
     MSG_CODE_COUNTER_UPDATE_RESP,
     MSG_CODE_COUNTER_GET_REQ,
-    MSG_CODE_COUNTER_GET_RESP,
-    MSG_CODE_YOKOZUNA_INDEX_GET_REQ,
-    MSG_CODE_YOKOZUNA_INDEX_GET_RESP,
-    MSG_CODE_YOKOZUNA_INDEX_PUT_REQ,
-    MSG_CODE_YOKOZUNA_INDEX_DELETE_REQ,
-    MSG_CODE_YOKOZUNA_SCHEMA_GET_REQ,
-    MSG_CODE_YOKOZUNA_SCHEMA_GET_RESP,
-    MSG_CODE_YOKOZUNA_SCHEMA_PUT_REQ
-
+    MSG_CODE_COUNTER_GET_RESP
 )
 
 
@@ -147,6 +139,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
         if self.tombstone_vclocks():
             req.deletedvclock = 1
 
+        req.type = bucket.type
         req.bucket = bucket.name
         req.key = robj.key
 
@@ -190,6 +183,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
         if self.client_timeouts() and timeout:
             req.timeout = timeout
 
+        req.type = bucket.type
         req.bucket = bucket.name
         if robj.key:
             req.key = robj.key
@@ -242,6 +236,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
         if self.tombstone_vclocks() and robj.vclock:
             req.vclock = robj.vclock.encode('binary')
 
+        req.type = bucket.type
         req.bucket = bucket.name
         req.key = robj.key
 
@@ -266,6 +261,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
         lists of keys.
         """
         req = riak_pb.RpbListKeysReq()
+        req.type = bucket.type
         req.bucket = bucket.name
         if self.client_timeouts() and timeout:
             req.timeout = timeout
@@ -312,6 +308,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
         Serialize bucket property request and deserialize response
         """
         req = riak_pb.RpbGetBucketReq()
+        req.type = bucket.type
         req.bucket = bucket.name
 
         msg_code, resp = self._request(MSG_CODE_GET_BUCKET_REQ, req,
@@ -324,6 +321,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
         Serialize set bucket property request and deserialize response
         """
         req = riak_pb.RpbSetBucketReq()
+        req.type = bucket.type
         req.bucket = bucket.name
 
         if not self.pb_all_bucket_props():
@@ -346,6 +344,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
             return False
 
         req = riak_pb.RpbResetBucketReq()
+        req.type = bucket.type
         req.bucket = bucket.name
         self._request(MSG_CODE_RESET_BUCKET_REQ, req,
                       MSG_CODE_RESET_BUCKET_RESP)
@@ -384,17 +383,13 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
 
     def get_index(self, bucket, index, startkey, endkey=None,
                   return_terms=None, max_results=None, continuation=None,
-                  timeout=None, term_regex=None):
+                  timeout=None):
         if not self.pb_indexes():
             return self._get_index_mapred_emu(bucket, index, startkey, endkey)
 
-        if term_regex and not self.index_term_regex():
-            raise NotImplementedError("Secondary index term_regex is not "
-                                      "supported")
-
         req = self._encode_index_req(bucket, index, startkey, endkey,
                                      return_terms, max_results, continuation,
-                                     timeout, term_regex)
+                                     timeout)
 
         msg_code, resp = self._request(MSG_CODE_INDEX_REQ, req,
                                        MSG_CODE_INDEX_RESP)
@@ -412,95 +407,19 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
 
     def stream_index(self, bucket, index, startkey, endkey=None,
                      return_terms=None, max_results=None, continuation=None,
-                     timeout=None, term_regex=None):
+                     timeout=None):
         if not self.stream_indexes():
             raise NotImplementedError("Secondary index streaming is not "
                                       "supported")
 
-        if term_regex and not self.index_term_regex():
-            raise NotImplementedError("Secondary index term_regex is not "
-                                      "supported")
-
         req = self._encode_index_req(bucket, index, startkey, endkey,
                                      return_terms, max_results, continuation,
-                                     timeout, term_regex)
+                                     timeout)
         req.stream = True
 
         self._send_msg(MSG_CODE_INDEX_REQ, req)
 
         return RiakPbcIndexStream(self, index, return_terms)
-
-    def create_search_index(self, index, schema=None):
-        if not self.pb_search_admin():
-            raise NotImplementedError("Yokozuna administration is not "
-                                      "supported for this version")
-        idx = riak_pb.RpbYokozunaIndex(name=index)
-        if schema:
-            idx.schema = schema
-        req = riak_pb.RpbYokozunaIndexPutReq(index=idx)
-
-        self._request(MSG_CODE_YOKOZUNA_INDEX_PUT_REQ, req,
-                      MSG_CODE_PUT_RESP)
-        return True
-
-    def get_search_index(self, index):
-        if not self.pb_search_admin():
-            raise NotImplementedError("Yokozuna administration is not "
-                                      "supported for this version")
-        req = riak_pb.RpbYokozunaIndexGetReq(name=index)
-
-        msg_code, resp = self._request(MSG_CODE_YOKOZUNA_INDEX_GET_REQ, req,
-                                       MSG_CODE_YOKOZUNA_INDEX_GET_RESP)
-        if len(resp.index) > 0:
-            return self._decode_yz_index(resp.index[0])
-        else:
-            raise RiakError('notfound')
-
-    def list_search_indexes(self):
-        if not self.pb_search_admin():
-            raise NotImplementedError("Yokozuna administration is not "
-                                      "supported for this version")
-        req = riak_pb.RpbYokozunaIndexGetReq()
-
-        msg_code, resp = self._request(MSG_CODE_YOKOZUNA_INDEX_GET_REQ, req,
-                                       MSG_CODE_YOKOZUNA_INDEX_GET_RESP)
-
-        return [self._decode_yz_index(index) for index in resp.index]
-
-    def delete_search_index(self, index):
-        if not self.pb_search_admin():
-            raise NotImplementedError("Yokozuna administration is not "
-                                      "supported for this version")
-        req = riak_pb.RpbYokozunaIndexDeleteReq(name=index)
-
-        self._request(MSG_CODE_YOKOZUNA_INDEX_DELETE_REQ, req,
-                      MSG_CODE_DEL_RESP)
-
-        return True
-
-    def create_search_schema(self, schema, content):
-        if not self.pb_search_admin():
-            raise NotImplementedError("Yokozuna administration is not "
-                                      "supported for this version")
-        scma = riak_pb.RpbYokozunaSchema(name=schema, content=content)
-        req = riak_pb.RpbYokozunaSchemaPutReq(schema=scma)
-
-        self._request(MSG_CODE_YOKOZUNA_SCHEMA_PUT_REQ, req,
-                      MSG_CODE_PUT_RESP)
-        return True
-
-    def get_search_schema(self, schema):
-        if not self.pb_search_admin():
-            raise NotImplementedError("Yokozuna administration is not "
-                                      "supported for this version")
-        req = riak_pb.RpbYokozunaSchemaGetReq(name=schema)
-
-        msg_code, resp = self._request(MSG_CODE_YOKOZUNA_SCHEMA_GET_REQ, req,
-                                       MSG_CODE_YOKOZUNA_SCHEMA_GET_RESP)
-        result = {}
-        result['name'] = resp.schema.name
-        result['content'] = resp.schema.content
-        return result
 
     def search(self, index, query, **params):
         if not self.pb_search():
@@ -553,6 +472,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
             raise NotImplementedError("Counters are not supported")
 
         req = riak_pb.RpbCounterGetReq()
+        req.type = bucket.type
         req.bucket = bucket.name
         req.key = key
         if params.get('r') is not None:
@@ -576,6 +496,7 @@ class RiakPbcTransport(RiakTransport, RiakPbcConnection, RiakPbcCodec):
             raise NotImplementedError("Counters are not supported")
 
         req = riak_pb.RpbCounterUpdateReq()
+        req.type = bucket.type
         req.bucket = bucket.name
         req.key = key
         req.amount = value

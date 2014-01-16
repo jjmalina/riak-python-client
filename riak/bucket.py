@@ -43,7 +43,7 @@ class RiakBucket(object):
     objects within the bucket.
     """
 
-    def __init__(self, client, name):
+    def __init__(self, client, name, type=None):
         """
         Returns a new ``RiakBucket`` instance.
 
@@ -55,12 +55,11 @@ class RiakBucket(object):
         try:
             if isinstance(name, basestring):
                 name = name.encode('ascii')
-            else:
-                raise TypeError('Bucket name must be a string')
         except UnicodeError:
             raise TypeError('Unicode bucket names are not supported.')
 
         self._client = client
+        self.type = type
         self.name = name
         self._encoders = {}
         self._decoders = {}
@@ -445,11 +444,10 @@ class RiakBucket(object):
         :meth:`RiakClient.fulltext_search()
         <riak.client.RiakClient.fulltext_search>` for more details.
         """
-        return self._client.fulltext_search(self.name, query, **params)
+        return self._client.solr.search(self.name, query, **params)
 
     def get_index(self, index, startkey, endkey=None, return_terms=None,
-                  max_results=None, continuation=None, timeout=None,
-                  term_regex=None):
+                  max_results=None, continuation=None, timeout=None):
         """
         Queries a secondary index over objects in this bucket,
         returning keys or index/key pairs. See
@@ -460,11 +458,10 @@ class RiakBucket(object):
                                       return_terms=return_terms,
                                       max_results=max_results,
                                       continuation=continuation,
-                                      timeout=timeout, term_regex=term_regex)
+                                      timeout=timeout)
 
     def stream_index(self, index, startkey, endkey=None, return_terms=None,
-                     max_results=None, continuation=None, timeout=None,
-                     term_regex=None):
+                     max_results=None, continuation=None, timeout=None):
         """
         Queries a secondary index over objects in this bucket,
         streaming keys or index/key pairs via an iterator. See
@@ -475,8 +472,7 @@ class RiakBucket(object):
                                          return_terms=return_terms,
                                          max_results=max_results,
                                          continuation=continuation,
-                                         timeout=timeout,
-                                         term_regex=term_regex)
+                                         timeout=timeout)
 
     def delete(self, key, **kwargs):
         """Deletes an object from riak. Short hand for
